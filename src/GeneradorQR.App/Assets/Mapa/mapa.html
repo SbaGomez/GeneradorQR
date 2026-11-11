@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="leaflet.css">
+<style>
+  html, body, #mapa { margin: 0; height: 100%; font-family: "Segoe UI Variable Text", "Segoe UI", sans-serif; }
+  .barra { position: absolute; top: 10px; left: 54px; right: 10px; z-index: 1000; display: flex; gap: 8px; }
+  .barra input {
+    flex: 1; min-width: 0; font: inherit; font-size: 14px; padding: 8px 12px; border: 1px solid #C9CED6;
+    border-radius: 6px; outline: none; box-shadow: 0 1px 4px rgba(0,0,0,.15);
+  }
+  .barra input:focus { border-color: #1565C0; box-shadow: 0 0 0 1px #1565C0, 0 1px 4px rgba(0,0,0,.15); }
+  .barra button {
+    font: inherit; font-size: 13px; font-weight: 600; padding: 0 12px; border: 1px solid #C9CED6; border-radius: 6px;
+    background: #fff; color: #1565C0; cursor: pointer; white-space: nowrap; box-shadow: 0 1px 4px rgba(0,0,0,.15);
+  }
+  .barra button:hover { background: #E3EEFA; border-color: #1565C0; }
+  #estado {
+    position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 1000; display: none;
+    background: rgba(31,35,40,.88); color: #fff; font-size: 13px; padding: 7px 14px; border-radius: 16px; white-space: nowrap;
+  }
+  /* Pin in the app's blue, drawn with CSS so no image files are needed. */
+  .pin { width: 26px; height: 26px; border-radius: 50% 50% 50% 0; background: #1565C0; transform: rotate(-45deg);
+         border: 3px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,.4); box-sizing: border-box; }
+  .pin::after { content: ""; position: absolute; width: 8px; height: 8px; background: #fff; border-radius: 50%; top: 6px; left: 6px; }
+</style>
+</head>
+<body>
+<div id="mapa"></div>
+<div class="barra">
+  <input id="buscar" type="search" placeholder="Buscar dirección y Enter…" autocomplete="off">
+  <button id="yo" title="Volver a donde estás">&#x2316; Mi ubicación</button>
+</div>
+<div id="estado"></div>
+<script src="leaflet.js"></script>
+<script>
+  // Bridge with the app: posts {tipo:"punto",lat,lng} when the user picks a place and {tipo:"miUbicacion"} for the
+  // button; the app calls mover(lat, lng, zoom) and estado(texto).
+  const enviar = m => window.chrome.webview.postMessage(m);
+
+  const mapa = L.map("mapa", { zoomControl: true }).setView([-34.6037, -58.3816], 12);
+  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 19,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+  }).addTo(mapa);
+
+  const icono = L.divIcon({ className: "", html: '<div class="pin"></div>', iconSize: [26, 26], iconAnchor: [13, 30] });
+  const marcador = L.marker([-34.6037, -58.3816], { icon: icono, draggable: true }).addTo(mapa);
+
+  const elegir = latlng => {
+    marcador.setLatLng(latlng);
+    enviar({ tipo: "punto", lat: latlng.lat, lng: latlng.lng });
+  };
+  mapa.on("click", e => elegir(e.latlng));
+  marcador.on("dragend", () => elegir(marcador.getLatLng()));
+
+  window.mover = (lat, lng, zoom) => {
+    marcador.setLatLng([lat, lng]);
+    mapa.setView([lat, lng], zoom ?? Math.max(mapa.getZoom(), 16));
+  };
+
+  let ocultarEstado;
+  window.estado = (texto, segundos) => {
+    const e = document.getElementById("estado");
+    clearTimeout(ocultarEstado);
+    e.textContent = texto || "";
+    e.style.display = texto ? "block" : "none";
+    if (texto && segundos) ocultarEstado = setTimeout(() => (e.style.display = "none"), segundos * 1000);
+  };
+
+  document.getElementById("yo").onclick = () => enviar({ tipo: "miUbicacion" });
+
+  // Address search with OpenStreetMap's Nominatim (only on Enter: its policy allows at most one search per second).
+  document.getElementById("buscar").addEventListener("keydown", async ev => {
+    if (ev.key !== "Enter") return;
+    const q = ev.target.value.trim();
+    if (!q) return;
+    estado("Buscando…");
+    try {
+      const r = await fetch("https://nominatim.openstreetmap.org/search?format=json&limit=1&accept-language=es&q=" + encodeURIComponent(q));
+      const datos = await r.json();
+      if (!datos.length) { estado("No encontré esa dirección", 3); return; }
+      const lat = parseFloat(datos[0].lat), lng = parseFloat(datos[0].lon);
+      mover(lat, lng, 17);
+      enviar({ tipo: "punto", lat, lng });
+      estado("");
+    } catch {
+      estado("No se pudo buscar (¿hay internet?)", 3);
+    }
+  });
+</script>
+</body>
+</html>

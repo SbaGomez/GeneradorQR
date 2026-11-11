@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/GeneradorQR.App/GeneradorQR.App.csproj" DefaultStartup="true" />
+    <Project Path="src/GeneradorQR.Core/GeneradorQR.Core.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/GeneradorQR.Core.Tests/GeneradorQR.Core.Tests.csproj" />
+  </Folder>
+</Solution>

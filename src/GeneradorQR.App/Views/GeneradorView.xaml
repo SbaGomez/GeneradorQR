@@ -1,0 +1,301 @@
+<UserControl x:Class="GeneradorQR.App.Views.GeneradorView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:GeneradorQR.App.ViewModels"
+             xmlns:vistas="clr-namespace:GeneradorQR.App.Views">
+    <UserControl.Resources>
+        <!-- One form per kind of QR. Every field updates the preview as you type. -->
+        <DataTemplate DataType="{x:Type vm:WebQr}">
+            <StackPanel>
+                <TextBlock Text="Dirección de la página" Style="{StaticResource InputLabel}"/>
+                <TextBox Text="{Binding Url, UpdateSourceTrigger=PropertyChanged}"/>
+                <TextBlock Style="{StaticResource Hint}" Text="Ejemplo: www.mipagina.com o https://mipagina.com/menu"/>
+            </StackPanel>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vm:WhatsAppQr}">
+            <StackPanel>
+                <TextBlock Text="Número de WhatsApp" Style="{StaticResource InputLabel}"/>
+                <TextBox Text="{Binding Numero, UpdateSourceTrigger=PropertyChanged}"/>
+                <TextBlock Style="{StaticResource Hint}" Text="Con código de país y sin el 0 ni el 15. Argentina: 549 + característica + número (ej: 5491123456789)."/>
+                <TextBlock Text="Mensaje ya escrito (opcional)" Style="{StaticResource InputLabel}"/>
+                <TextBox Text="{Binding Mensaje, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Multilinea}"/>
+            </StackPanel>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vm:WifiQr}">
+            <StackPanel>
+                <TextBlock Text="Nombre de la red (SSID)" Style="{StaticResource InputLabel}"/>
+                <TextBox Text="{Binding Red, UpdateSourceTrigger=PropertyChanged}"/>
+                <TextBlock Text="Seguridad" Style="{StaticResource InputLabel}"/>
+                <ComboBox SelectedIndex="{Binding Seguridad}">
+                    <ComboBoxItem Content="WPA / WPA2 / WPA3 (la más común)"/>
+                    <ComboBoxItem Content="WEP"/>
+                    <ComboBoxItem Content="Sin contraseña"/>
+                </ComboBox>
+                <TextBlock Text="Contraseña" Style="{StaticResource InputLabel}"/>
+                <TextBox Text="{Binding Clave, UpdateSourceTrigger=PropertyChanged}"/>
+                <CheckBox Content="Es una red oculta" IsChecked="{Binding Oculta}"/>
+            </StackPanel>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vm:TextoQr}">
+            <StackPanel>
+                <TextBlock Text="Texto" Style="{StaticResource InputLabel}"/>
+                <TextBox Text="{Binding Texto, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Multilinea}" MinHeight="140"/>
+            </StackPanel>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vm:EmailQr}">
+            <StackPanel>
+                <TextBlock Text="Para" Style="{StaticResource InputLabel}"/>
+                <TextBox Text="{Binding Para, UpdateSourceTrigger=PropertyChanged}"/>
+                <TextBlock Text="Asunto (opcional)" Style="{StaticResource InputLabel}"/>
+                <TextBox Text="{Binding Asunto, UpdateSourceTrigger=PropertyChanged}"/>
+                <TextBlock Text="Mensaje (opcional)" Style="{StaticResource InputLabel}"/>
+                <TextBox Text="{Binding Cuerpo, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Multilinea}"/>
+            </StackPanel>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vm:TelefonoQr}">
+            <StackPanel>
+                <TextBlock Text="Número de teléfono" Style="{StaticResource InputLabel}"/>
+                <TextBox Text="{Binding Numero, UpdateSourceTrigger=PropertyChanged}"/>
+                <TextBlock Style="{StaticResource Hint}" Text="Ejemplo: +54 11 2345-6789"/>
+            </StackPanel>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vm:SmsQr}">
+            <StackPanel>
+                <TextBlock Text="Número de teléfono" Style="{StaticResource InputLabel}"/>
+                <TextBox Text="{Binding Numero, UpdateSourceTrigger=PropertyChanged}"/>
+                <TextBlock Text="Mensaje (opcional)" Style="{StaticResource InputLabel}"/>
+                <TextBox Text="{Binding Mensaje, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Multilinea}"/>
+            </StackPanel>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vm:ContactoQr}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition/>
+                    <ColumnDefinition Width="12"/>
+                    <ColumnDefinition/>
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <TextBlock Text="Nombre" Style="{StaticResource InputLabel}"/>
+                    <TextBox Text="{Binding NombrePersona, UpdateSourceTrigger=PropertyChanged}"/>
+                    <TextBlock Text="Teléfono" Style="{StaticResource InputLabel}"/>
+                    <TextBox Text="{Binding Telefono, UpdateSourceTrigger=PropertyChanged}"/>
+                    <TextBlock Text="Empresa (opcional)" Style="{StaticResource InputLabel}"/>
+                    <TextBox Text="{Binding Empresa, UpdateSourceTrigger=PropertyChanged}"/>
+                </StackPanel>
+                <StackPanel Grid.Column="2">
+                    <TextBlock Text="Apellido" Style="{StaticResource InputLabel}"/>
+                    <TextBox Text="{Binding Apellido, UpdateSourceTrigger=PropertyChanged}"/>
+                    <TextBlock Text="Email (opcional)" Style="{StaticResource InputLabel}"/>
+                    <TextBox Text="{Binding Email, UpdateSourceTrigger=PropertyChanged}"/>
+                    <TextBlock Text="Página web (opcional)" Style="{StaticResource InputLabel}"/>
+                    <TextBox Text="{Binding Web, UpdateSourceTrigger=PropertyChanged}"/>
+                </StackPanel>
+            </Grid>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vm:UbicacionQr}">
+            <StackPanel>
+                <vistas:MapaSelector Height="340" Margin="0,0,0,14"/>
+                <TextBlock Text="Coordenadas" Style="{StaticResource InputLabel}"/>
+                <TextBox Text="{Binding Coordenadas, UpdateSourceTrigger=PropertyChanged}" FontFamily="Consolas"/>
+                <TextBlock Style="{StaticResource Hint}" Text="Se completan solas al elegir en el mapa. También podés pegarlas de Google Maps."/>
+            </StackPanel>
+        </DataTemplate>
+    </UserControl.Resources>
+
+    <Grid Margin="32,28,32,24">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" MinWidth="320"/>
+            <ColumnDefinition Width="28"/>
+            <ColumnDefinition Width="380"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Form + design -->
+        <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,0,8,0">
+            <StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="{Binding Tipo.Icono}" FontFamily="{StaticResource Iconos}" FontSize="22"
+                               Foreground="{StaticResource AccentBrush}" VerticalAlignment="Center" Margin="0,2,12,0"/>
+                    <TextBlock Text="{Binding Tipo.Nombre}" Style="{StaticResource PageTitle}"/>
+                </StackPanel>
+                <TextBlock Text="{Binding Tipo.Descripcion}" Style="{StaticResource Descripcion}"/>
+
+                <ContentControl Content="{Binding Tipo}" Focusable="False"/>
+
+                <Border Height="1" Background="{StaticResource SubtleBorderBrush}" Margin="0,8,0,8"/>
+                <TextBlock Text="Diseño" Style="{StaticResource SectionTitle}"/>
+
+                <TextBlock Text="Color del QR" Style="{StaticResource InputLabel}"/>
+                <ItemsControl ItemsSource="{x:Static vm:GeneradorViewModel.ColoresSugeridos}" Focusable="False">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Button Style="{StaticResource Muestra}" Background="{Binding}" ToolTip="{Binding}"
+                                    Command="{Binding DataContext.ElegirColorCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                    CommandParameter="{Binding}"/>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition/>
+                        <ColumnDefinition Width="12"/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <TextBlock Text="Color (hex)" Style="{StaticResource InputLabel}"/>
+                        <TextBox Text="{Binding ColorQr, UpdateSourceTrigger=PropertyChanged}" FontFamily="Consolas"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="Fondo (hex)" Style="{StaticResource InputLabel}"/>
+                        <TextBox Text="{Binding ColorFondo, UpdateSourceTrigger=PropertyChanged}" FontFamily="Consolas">
+                            <TextBox.Style>
+                                <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding FondoTransparente}" Value="True">
+                                            <Setter Property="IsEnabled" Value="False"/>
+                                            <Setter Property="Opacity" Value="0.45"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBox.Style>
+                        </TextBox>
+                    </StackPanel>
+                </Grid>
+                <CheckBox IsChecked="{Binding FondoTransparente}"
+                          ToolTip="Para ponerlo sobre un diseño o una foto. Usalo sobre fondos claros: el celular necesita contraste.">
+                    <TextBlock Text="Fondo transparente (solo el QR, sin el fondo)" Foreground="{StaticResource TextBrush}"/>
+                </CheckBox>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition/>
+                        <ColumnDefinition Width="12"/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <TextBlock Text="Corrección de errores" Style="{StaticResource InputLabel}"/>
+                        <ComboBox SelectedIndex="{Binding Nivel}"
+                                  ToolTip="Cuánto del código puede estar tapado o dañado y leerse igual. Media es la recomendada; Alta o Máxima si lo vas a imprimir chico o en exteriores.">
+                            <ComboBoxItem Content="Baja (7%)"/>
+                            <ComboBoxItem Content="Media (15%)"/>
+                            <ComboBoxItem Content="Alta (25%)"/>
+                            <ComboBoxItem Content="Máxima (30%)"/>
+                        </ComboBox>
+                    </StackPanel>
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="Tamaño del PNG" Style="{StaticResource InputLabel}"/>
+                        <ComboBox ItemsSource="{x:Static vm:GeneradorViewModel.Tamanos}" SelectedItem="{Binding Tamano}"
+                                  ItemStringFormat="{}{0} × {0} px"/>
+                    </StackPanel>
+                </Grid>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Preview + actions -->
+        <Border Grid.Column="2" Style="{StaticResource Tarjeta}" VerticalAlignment="Top">
+            <StackPanel>
+                <Border Background="{StaticResource DeskBrush}" CornerRadius="8" Height="320" Padding="16">
+                    <Grid>
+                        <!-- Checkerboard behind a transparent QR, the usual "see-through" cue. -->
+                        <Border Visibility="{Binding HayQr, Converter={StaticResource BoolToVisibility}}"
+                                Width="{Binding ActualWidth, ElementName=Previa}" Height="{Binding ActualHeight, ElementName=Previa}">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding FondoTransparente}" Value="False">
+                                            <Setter Property="Background" Value="{x:Null}"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                    <Setter Property="Background">
+                                        <Setter.Value>
+                                            <DrawingBrush TileMode="Tile" Viewport="0,0,16,16" ViewportUnits="Absolute">
+                                                <DrawingBrush.Drawing>
+                                                    <DrawingGroup>
+                                                        <GeometryDrawing Brush="White" Geometry="M0,0 H2 V2 H0Z"/>
+                                                        <GeometryDrawing Brush="#DDE1E6" Geometry="M0,0 H1 V1 H0Z M1,1 H2 V2 H1Z"/>
+                                                    </DrawingGroup>
+                                                </DrawingBrush.Drawing>
+                                            </DrawingBrush>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </Border.Style>
+                        </Border>
+                        <Image x:Name="Previa" Source="{Binding VistaPrevia}" RenderOptions.BitmapScalingMode="NearestNeighbor"
+                               Visibility="{Binding HayQr, Converter={StaticResource BoolToVisibility}}"/>
+                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" MaxWidth="260">
+                            <StackPanel.Style>
+                                <Style TargetType="StackPanel">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HayQr}" Value="True">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </StackPanel.Style>
+                            <TextBlock Text="&#xED14;" FontFamily="{StaticResource Iconos}" FontSize="56" HorizontalAlignment="Center"
+                                       Foreground="{StaticResource InputBorderBrush}" Margin="0,0,0,12"/>
+                            <TextBlock Text="{Binding Aviso}" TextWrapping="Wrap" TextAlignment="Center" FontSize="13"
+                                       Foreground="{StaticResource MutedTextBrush}"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <StackPanel Visibility="{Binding HayQr, Converter={StaticResource BoolToVisibility}}" Margin="0,14,0,0">
+                    <TextBlock Text="Lo que lleva el QR" Style="{StaticResource InputLabel}"/>
+                    <TextBox Text="{Binding Codigo.Contenido, Mode=OneWay}" IsReadOnly="True" FontFamily="Consolas" FontSize="12"
+                             TextWrapping="Wrap" MaxHeight="72" VerticalScrollBarVisibility="Auto" Background="{StaticResource SidebarBrush}"/>
+                </StackPanel>
+
+                <UniformGrid Columns="2" Margin="0,4,0,0">
+                    <Button Style="{StaticResource PrimaryButton}" Command="{Binding GuardarPngCommand}" Margin="0,0,5,10">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE74E;" FontFamily="{StaticResource Iconos}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <TextBlock Text="Guardar PNG"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource SecondaryButton}" Command="{Binding GuardarSvgCommand}" Margin="5,0,0,10"
+                            ToolTip="Vectorial: queda nítido a cualquier tamaño (ideal para imprenta)">
+                        <TextBlock Text="Guardar SVG"/>
+                    </Button>
+                    <Button Style="{StaticResource SecondaryButton}" Command="{Binding CopiarCommand}" Margin="0,0,5,0">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE8C8;" FontFamily="{StaticResource Iconos}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <TextBlock Text="Copiar imagen"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource SecondaryButton}" Command="{Binding ProbarCommand}" Margin="5,0,0,0"
+                            ToolTip="Abre el destino para comprobarlo antes de imprimir">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE8A7;" FontFamily="{StaticResource Iconos}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <TextBlock Text="Probar enlace"/>
+                        </StackPanel>
+                    </Button>
+                </UniformGrid>
+
+                <TextBlock Text="{Binding Estado}" Foreground="{StaticResource SuccessBrush}" FontSize="12.5" TextWrapping="Wrap" Margin="0,12,0,0">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Estado}" Value="{x:Null}">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>
